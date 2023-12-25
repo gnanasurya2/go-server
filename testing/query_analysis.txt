@@ -1,0 +1,32 @@
+without index on name
+-> Sort: parent.lft  (actual time=7.02..7.02 rows=6 loops=1)
+    -> Stream results  (cost=897806 rows=996355) (actual time=2.92..7 rows=6 loops=1)
+        -> Filter: (node.lft between parent.lft and parent.rgt)  (cost=897806 rows=996355) (actual time=2.92..6.99 rows=6 loops=1)
+            -> Inner hash join (no condition)  (cost=897806 rows=996355) (actual time=2.92..6.57 rows=9964 loops=1)
+                -> Table scan on parent  (cost=0.138 rows=9470) (actual time=0.0245..2.88 rows=9964 loops=1)
+                -> Hash
+                    -> Filter: (node.`name` = 203381)  (cost=971 rows=947) (actual time=2.87..2.88 rows=1 loops=1)
+                        -> Table scan on node  (cost=971 rows=9470) (actual time=0.0448..2.5 rows=9964 loops=1)
+
+
+with index on name
+-> Sort: parent.lft  (actual time=0.146..0.146 rows=6 loops=1)
+    -> Stream results  (cost=968 rows=1048) (actual time=0.0787..0.129 rows=6 loops=1)
+        -> Nested loop inner join  (cost=968 rows=1048) (actual time=0.0765..0.126 rows=6 loops=1)
+            -> Index lookup on node using idx_name (name=203381), with index condition: (node.`name` = 203381)  (cost=0.35 rows=1) (actual time=0.0285..0.0296 rows=1 loops=1)
+            -> Filter: (node.lft between parent.lft and parent.rgt)  (cost=129 rows=1048) (actual time=0.0461..0.094 rows=6 loops=1)
+                -> Index range scan on parent (re-planned for each iteration)  (cost=129 rows=9431) (actual time=0.043..0.0894 rows=16 loops=1)
+
+
+
+-> Sort: node.lft  (actual time=4.76..4.77 rows=9 loops=1)
+    -> Filter: (depth = 1)  (actual time=4.74..4.75 rows=9 loops=1)
+        -> Table scan on <temporary>  (actual time=4.74..4.74 rows=57 loops=1)
+            -> Aggregate using temporary table  (actual time=4.74..4.74 rows=57 loops=1)
+                -> Nested loop inner join  (cost=989161 rows=1.1e+6) (actual time=0.0528..4.52 rows=331 loops=1)
+                    -> Nested loop inner join  (cost=968 rows=1048) (actual time=0.0347..0.132 rows=57 loops=1)
+                        -> Index lookup on sub_parent using idx_name (name='2033')  (cost=0.35 rows=1) (actual time=0.0177..0.0192 rows=1 loops=1)
+                        -> Filter: (node.lft between sub_parent.lft and sub_parent.rgt)  (cost=129 rows=1048) (actual time=0.0166..0.109 rows=57 loops=1)
+                            -> Index range scan on node (re-planned for each iteration)  (cost=129 rows=9431) (actual time=0.0161..0.103 rows=57 loops=1)
+                    -> Filter: (node.lft between parent.lft and parent.rgt)  (cost=0.127 rows=1048) (actual time=0.0217..0.0763 rows=5.81 loops=57)
+                        -> Index range scan on parent (re-planned for each iteration)  (cost=0.127 rows=9431) (actual time=0.0212..0.073 rows=32 loops=57)
